@@ -1,4 +1,18 @@
 node_modules/
 frontend/node_modules/
 backend/node_modules/
+
+# env files
 .env
+.env.local
+**/.env
+**/.env.local
+
+# Firebase service account
+backend/society-subscription-3b386-firebase-adminsdk-fbsvc-e809535277.json
+
+# Next.js build output
+frontend/.next/
+
+# OS
+.DS_Store
