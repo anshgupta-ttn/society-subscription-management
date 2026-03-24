@@ -1,0 +1,3 @@
+// FCM removed — service worker disabled
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', () => self.clients.claim());
