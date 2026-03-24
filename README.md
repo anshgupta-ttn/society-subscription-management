@@ -1,100 +1,101 @@
 # SocietyManagement
 
-A full-stack society management web application with a separate **Admin Panel** and **Resident Portal**. Admins manage flats, subscriptions, payments, and notifications. Residents can log in, view their dues, and pay online.
-
----
-
-## Table of Contents
-
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
-- [Environment Variables](#environment-variables)
-- [Getting Started](#getting-started)
-- [Admin Panel](#admin-panel)
-- [Resident Portal](#resident-portal)
-- [API Overview](#api-overview)
+A full-stack society management web application with a separate Admin Panel and Resident Portal. Admins manage flats, subscriptions, payments, and notifications. Residents can log in, view their dues, and pay online.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 16, Tailwind CSS, Recharts, jsPDF |
-| Backend | Node.js, Express.js |
-| Database | PostgreSQL |
-| Auth (Admin) | NextAuth.js + Google OAuth |
-| Auth (Resident) | JWT + bcrypt |
+- Frontend: Next.js 16, Tailwind CSS, Recharts, jsPDF
+- Backend: Node.js, Express.js
+- Database: PostgreSQL
+- Auth (Admin): NextAuth.js + Google OAuth
+- Auth (Resident): bcrypt password check, session cookie
 
+---
+
+## Project Structure
+
+```
+society-subscription-management/
+├── backend/
+│   ├── controllers/       # Route handlers
+│   ├── middleware/        # Resident auth middleware
+│   ├── routes/            # Express route definitions
+│   ├── scripts/           # One-time utility scripts
+│   ├── services/          # Firebase admin setup
+│   ├── db.js              # PostgreSQL pool
+│   └── server.js          # Express entry point
+└── frontend/
+    ├── app/
+    │   ├── admin/         # Admin panel pages
+    │   ├── api/auth/      # NextAuth route
+    │   ├── components/    # Shared components
+    │   └── (resident pages: dashboard, subscriptions, pay-now, profile, notifications)
+    ├── lib/               # API base URL, Firebase client
+    ├── middleware.js       # Route protection
+    └── public/
+```
+
+---
 
 ## Database Schema
 
-### `flats`
-| Column | Type | Notes |
-|---|---|---|
-| id | UUID | Primary key |
-| flat_number | TEXT | |
-| owner_name | TEXT | |
-| owner_email | TEXT | Unique |
-| owner_phone | TEXT | |
-| flat_type | TEXT | e.g. `1BHK`, `2BHK` |
-| is_active | BOOLEAN | |
-| password | TEXT | bcrypt hashed |
-| created_at | TIMESTAMP | |
+### flats
+- id (UUID, primary key)
+- flat_number (TEXT)
+- owner_name (TEXT)
+- owner_email (TEXT, unique)
+- owner_phone (TEXT)
+- flat_type (TEXT) — e.g. 1BHK, 2BHK
+- is_active (BOOLEAN)
+- password (TEXT, bcrypt hashed)
+- created_at (TIMESTAMP)
 
-### `subscription_plans`
-| Column | Type | Notes |
-|---|---|---|
-| id | SERIAL | |
-| flat_type | TEXT | |
-| monthly_amount | NUMERIC | |
-| effective_from | DATE | |
+### subscription_plans
+- id (SERIAL)
+- flat_type (TEXT)
+- monthly_amount (NUMERIC)
+- effective_from (DATE)
 
-### `monthly_subscriptions`
-| Column | Type | Notes |
-|---|---|---|
-| id | SERIAL | |
-| flat_id | UUID | FK → flats |
-| plan_id | INT | FK → subscription_plans |
-| month | DATE | First day of the month |
-| amount_due | NUMERIC | |
-| status | TEXT | `pending` / `paid` |
-| due_date | DATE | |
+### monthly_subscriptions
+- id (SERIAL)
+- flat_id (UUID → flats)
+- plan_id (INT → subscription_plans)
+- month (DATE, first day of month)
+- amount_due (NUMERIC)
+- status (TEXT) — pending / paid
+- due_date (DATE)
 
-### `payments`
-| Column | Type | Notes |
-|---|---|---|
-| id | SERIAL | |
-| flat_id | UUID | FK → flats |
-| subscription_id | INT | FK → monthly_subscriptions |
-| amount_paid | NUMERIC | |
-| payment_mode | TEXT | `cash` / `upi` / `online` |
-| paid_at | DATE | |
-| transaction_ref | TEXT | |
-| created_at | TIMESTAMP | |
+### payments
+- id (SERIAL)
+- flat_id (UUID → flats)
+- subscription_id (INT → monthly_subscriptions)
+- amount_paid (NUMERIC)
+- payment_mode (TEXT) — cash / upi / online
+- paid_at (DATE)
+- transaction_ref (TEXT)
+- created_at (TIMESTAMP)
 
-### `notifications`
-| Column | Type | Notes |
-|---|---|---|
-| id | SERIAL | |
-| title | TEXT | |
-| message | TEXT | |
-| target_type | TEXT | `all` / `flat` |
-| target_id | UUID | FK → flats (nullable) |
-| sent_at | TIMESTAMP | |
+### notifications
+- id (SERIAL)
+- title (TEXT)
+- message (TEXT)
+- target_type (TEXT) — all / flat
+- target_id (UUID → flats, nullable)
+- sent_at (TIMESTAMP)
 
 ---
 
 ## Environment Variables
 
-### `backend/.env`
-```env
+### backend/.env
+```
 JWT_SECRET=your_jwt_secret_key
 ```
 
-### `frontend/.env.local`
-```env
+### frontend/.env.local
+```
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 NEXTAUTH_SECRET=your_nextauth_secret
@@ -102,48 +103,38 @@ NEXTAUTH_URL=http://localhost:3000
 ADMIN_EMAIL=admin@example.com
 ```
 
-> `ADMIN_EMAIL` is the Google account allowed to sign in as admin.
+ADMIN_EMAIL is the Google account allowed to sign in as admin.
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL running locally
+Prerequisites: Node.js 18+, PostgreSQL running locally
 
 ### 1. Database
-
 ```sql
 CREATE DATABASE testdb;
 ```
-
-Then run your schema SQL to create the tables above.
+Then run your schema SQL to create the tables.
 
 ### 2. Backend
-
 ```bash
 cd backend
 npm install
 node server.js
 ```
-
-Runs on **http://localhost:5000**
+Runs on http://localhost:5000
 
 ### 3. Frontend
-
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
-Runs on **http://localhost:3000**
+Runs on http://localhost:3000
 
 ### 4. Hash existing passwords (one-time)
-
 If you have existing flat records with plain-text passwords:
-
 ```bash
 cd backend
 node scripts/hashPasswords.js
@@ -153,70 +144,77 @@ node scripts/hashPasswords.js
 
 ## Admin Panel
 
-**Login:** `/admin/login` — Google Sign-In (only the configured `ADMIN_EMAIL` is allowed)
+Login at /admin/login via Google Sign-In. Only the configured ADMIN_EMAIL is allowed.
 
-| Page | Path | Description |
-|---|---|---|
-| Dashboard | `/admin/dashboard` | Stats cards, pie chart (collected vs pending), monthly bar chart, recent transactions |
-| Flats | `/admin/flats` | Add / edit / delete flats. Add supports "Existing Owner" search or "New Owner" form. Password is set on creation |
-| Plans | `/admin/plans` | View and update monthly subscription amounts per flat type |
-| Monthly | `/admin/monthly` | Auto-generates subscription records on load. Shows paid/pending status per flat for selected month/year |
-| Payments | `/admin/payments` | Record a payment for any flat's pending month. Shows recent payments list |
-| Notifications | `/admin/notifications` | Send a notification to all flats or a specific flat. View notification history |
-| Reports | `/admin/reports` | Monthly report (summary + payment mode breakdown) and yearly revenue report. Export as PDF or CSV |
-| Profile | `/admin/profile` | Admin Google account info + sign out |
+- Dashboard (/admin/dashboard) — stats cards, pie chart of collected vs pending, monthly bar chart, recent transactions
+- Flats (/admin/flats) — add, edit, delete flats. Supports existing owner search or new owner form. Password set on creation
+- Plans (/admin/plans) — view and update monthly subscription amounts per flat type
+- Monthly (/admin/monthly) — auto-generates subscription records on load. Shows paid/pending per flat for selected month/year
+- Payments (/admin/payments) — record a payment for any flat's pending month. Shows recent payments list
+- Notifications (/admin/notifications) — send a notification to all flats or a specific flat. View notification history
+- Reports (/admin/reports) — monthly summary and yearly revenue report. Export as PDF or CSV
+- Profile (/admin/profile) — admin Google account info and sign out
 
 ---
 
 ## Resident Portal
 
-**Login:** `/login` — Email + password (credentials stored in the `flats` table, password bcrypt-hashed)
+Login at /login with email and password. Credentials are stored in the flats table with bcrypt-hashed passwords.
 
-JWT token stored in `localStorage` as `resident_token`. All API calls include it via `Authorization: Bearer <token>`.
-
-| Page | Path | Description |
-|---|---|---|
-| Dashboard | `/dashboard` | Pending count, total due, recent payments, quick action links |
-| Subscriptions | `/subscriptions` | Full subscription history with paid/pending badges |
-| Month Detail | `/subscriptions/[month]` | Charges breakdown, payment details if paid, Pay Now CTA if pending |
-| Pay Now | `/pay-now` | Select a pending month, choose payment method, confirm payment |
-| Profile | `/profile` | View flat info, update phone number, change password |
-| Notifications | `/notifications` | View notifications sent by admin |
+- Dashboard (/dashboard) — pending count, total due, recent payments, quick action links
+- Subscriptions (/subscriptions) — full subscription history with paid/pending status
+- Month Detail (/subscriptions/[month]) — charges breakdown, payment details if paid, Pay Now button if pending
+- Pay Now (/pay-now) — select a pending month, choose payment method, confirm payment
+- Profile (/profile) — view flat info, update phone number, change password
+- Notifications (/notifications) — view notifications sent by admin
 
 ---
 
 ## API Overview
 
-All routes are prefixed with `/api`.
+All routes are prefixed with /api.
 
-| Method | Route | Description |
-|---|---|---|
-| GET | `/flats` | List all flats |
-| POST | `/flats` | Add a flat |
-| PUT | `/flats/:id` | Update a flat |
-| DELETE | `/flats/:id` | Delete a flat (cascades payments + subscriptions) |
-| GET | `/plans` | List subscription plans |
-| PUT | `/plans/:id` | Update plan amount |
-| GET | `/monthly` | Get monthly subscription records |
-| POST | `/monthly/generate` | Generate subscription records for a month |
-| GET | `/payments/flats` | Flat list for payment form |
-| GET | `/payments/pending/:flat_id` | Pending months for a flat |
-| GET | `/payments/recent` | Last 10 payments |
-| POST | `/payments` | Record a payment |
-| GET | `/dashboard/total-paid` | Total collected amount |
-| GET | `/dashboard/pending` | Total pending amount |
-| GET | `/dashboard/collection-rate` | Collection rate % |
-| GET | `/dashboard/transactions` | Last 5 transactions |
-| GET | `/dashboard/monthly-collection` | Monthly bar chart data |
-| GET | `/reports/monthly` | Monthly report summary |
-| GET | `/reports/yearly` | Yearly revenue breakdown |
-| POST | `/notifications/send` | Send a notification |
-| GET | `/notifications` | List notifications |
-| GET | `/notifications/unread-count` | Unread count for a flat |
-| POST | `/resident/login` | Resident login → returns JWT |
-| POST | `/resident/dashboard` | Resident dashboard data |
-| POST | `/resident/subscriptions` | Resident subscription list |
-| POST | `/resident/subscriptions/:month` | Single month detail |
-| POST | `/resident/payment` | Resident payment submission |
-| PUT | `/resident/profile` | Update phone number |
-| PUT | `/resident/change-password` | Change resident password |
+Flats
+- GET /flats — list all flats
+- POST /flats — add a flat
+- PUT /flats/:id — update a flat
+- DELETE /flats/:id — delete a flat (cascades payments and subscriptions)
+
+Plans
+- GET /plans — list subscription plans
+- PUT /plans/:id — update plan amount
+
+Monthly
+- GET /monthly — get monthly subscription records
+- POST /monthly/generate — generate subscription records for a month
+
+Payments
+- GET /payments/flats — flat list for payment form
+- GET /payments/pending/:flat_id — pending months for a flat
+- GET /payments/recent — last 10 payments
+- POST /payments — record a payment
+
+Dashboard
+- GET /dashboard/total-paid — total collected amount
+- GET /dashboard/pending — total pending amount
+- GET /dashboard/collection-rate — collection rate percentage
+- GET /dashboard/transactions — last 5 transactions
+- GET /dashboard/monthly-collection — monthly bar chart data
+
+Reports
+- GET /reports/monthly — monthly report summary
+- GET /reports/yearly — yearly revenue breakdown
+
+Notifications
+- POST /notifications/send — send a notification
+- GET /notifications — list notifications
+- GET /notifications/unread-count — unread count for a flat
+
+Resident
+- POST /resident/login — resident login
+- POST /resident/dashboard — resident dashboard data
+- POST /resident/subscriptions — resident subscription list
+- POST /resident/subscriptions/:month — single month detail
+- POST /resident/payment — resident payment submission
+- PUT /resident/profile — update phone number
+- PUT /resident/change-password — change resident password
